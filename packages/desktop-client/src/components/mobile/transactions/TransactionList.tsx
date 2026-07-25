@@ -513,6 +513,7 @@ function SelectedTransactionsFloatingActionBar({
                           : integerToCurrency(Number(value));
                         break;
                       case 'notes':
+                      case 'memo':
                         displayValue = `${mode} with ${String(value)}`;
                         break;
                       default:
@@ -561,6 +562,10 @@ function SelectedTransactionsFloatingActionBar({
                 {
                   name: 'notes',
                   text: t('Notes'),
+                },
+                {
+                  name: 'memo',
+                  text: t('Memo'),
                 },
                 {
                   name: 'category',

@@ -118,7 +118,8 @@ export function EditFieldModal({
     }
 
     case 'notes':
-      label = t('Notes');
+    case 'memo':
+      label = name === 'memo' ? t('Memo') : t('Notes');
       editor = ({ close }) => (
         <>
           <View

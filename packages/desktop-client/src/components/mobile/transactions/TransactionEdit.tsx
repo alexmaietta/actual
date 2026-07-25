@@ -238,7 +238,14 @@ type FooterProps = {
   editingField?: string;
   onEditField: (
     id: TransactionEntity['id'],
-    field: 'category' | 'payee' | 'account' | 'date' | 'amount' | 'notes',
+    field:
+      | 'category'
+      | 'payee'
+      | 'account'
+      | 'date'
+      | 'amount'
+      | 'notes'
+      | 'memo',
   ) => void;
 };
 
@@ -390,7 +397,14 @@ type ChildTransactionEditProps = {
   isBudgetTransfer: (transaction: TransactionEntity) => boolean;
   onEditField: (
     id: TransactionEntity['id'],
-    field: 'category' | 'payee' | 'account' | 'date' | 'amount' | 'notes',
+    field:
+      | 'category'
+      | 'payee'
+      | 'account'
+      | 'date'
+      | 'amount'
+      | 'notes'
+      | 'memo',
   ) => void;
   onUpdate: <Field extends keyof TransactionEntity>(
     transaction: TransactionEntity,
@@ -514,6 +528,23 @@ const ChildTransactionEdit = forwardRef<
             }
             onPress={() => onEditField(transaction.id, 'category')}
             data-testid={`category-field-${transaction.id}`}
+          />
+        </View>
+
+        <View>
+          <FieldLabel title={t('Memo')} />
+          <InputField
+            iconStart={<SvgNotesPaper width={17} height={17} />}
+            placeholder={t('Add a memo (optional)')}
+            disabled={
+              !!editingField &&
+              editingField !== getFieldName(transaction.id, 'memo')
+            }
+            defaultValue={transaction.memo}
+            onFocus={() =>
+              onRequestActiveEdit(getFieldName(transaction.id, 'memo'))
+            }
+            onUpdate={value => onUpdate(transaction, 'memo', value)}
           />
         </View>
 
@@ -865,7 +896,14 @@ const TransactionEditInner = memo<TransactionEditInnerProps>(
     const onEditFieldInner = useCallback(
       (
         transactionId: TransactionEntity['id'],
-        name: 'category' | 'payee' | 'account' | 'date' | 'amount' | 'notes',
+        name:
+          | 'category'
+          | 'payee'
+          | 'account'
+          | 'date'
+          | 'amount'
+          | 'notes'
+          | 'memo',
       ) => {
         onRequestActiveEdit?.(getFieldName(transaction.id, name), () => {
           const transactionToEdit = transactions.find(
@@ -1416,6 +1454,26 @@ const TransactionEditInner = memo<TransactionEditInnerProps>(
           </View>
 
           <View>
+            <FieldLabel title={t('Memo')} />
+            <InputField
+              iconStart={<SvgNotesPaper width={17} height={17} />}
+              placeholder={t('Add a memo (optional)')}
+              disabled={
+                !!editingField &&
+                editingField !== getFieldName(transaction.id, 'memo')
+              }
+              defaultValue={transaction.memo}
+              onFocus={() => {
+                onRequestActiveEdit(getFieldName(transaction.id, 'memo'));
+              }}
+              onBlur={() => onClearActiveEdit()}
+              onChange={event =>
+                onUpdateInner(transaction, 'memo', event.target.value)
+              }
+            />
+          </View>
+
+          <View>
             <FieldLabel title={t('Notes')} />
             <InputField
               ref={noteRef}
@@ -1788,6 +1846,7 @@ function TransactionEditUnconnected({
           ),
           cleared: searchParams.get('cleared') === 'true',
           notes: searchParams.get('notes') || '',
+          memo: searchParams.get('memo') || '',
         },
       ]);
     }

@@ -226,6 +226,7 @@ function getAccountResponse(results, accountId, startDate) {
     newTrans.date = getDate(transactionDate);
     newTrans.payeeName = trans.payee;
     newTrans.notes = trans.description;
+    newTrans.memo = trans.memo;
     newTrans.transactionAmount = { amount: trans.amount, currency: 'USD' };
     newTrans.transactionId = trans.id;
     newTrans.valueDate = newTrans.bookingDate;
@@ -252,6 +253,17 @@ function getAccountResponse(results, accountId, startDate) {
   const pendingSorted = pending.sort(sortFunction);
   const allSorted = all.sort(sortFunction);
 
+  const holdings = (account.holdings || []).map(h => ({
+    symbol: h.symbol,
+    description: h.description,
+    shares: h.shares,
+    purchase_price: h.purchase_price,
+    cost_basis: h.cost_basis,
+    market_value: h.market_value,
+    currency: h.currency,
+    created: h.created,
+  }));
+
   return {
     balances,
     startingBalance,
@@ -260,6 +272,7 @@ function getAccountResponse(results, accountId, startDate) {
       booked: bookedSorted,
       pending: pendingSorted,
     },
+    holdings,
   };
 }
 

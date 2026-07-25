@@ -35,6 +35,7 @@ export const defaultMappings: Mappings = new Map([
       ['date', 'date'],
       ['payee', 'payeeName'],
       ['notes', 'notes'],
+      ['memo', 'memo'],
     ]),
   ],
   [
@@ -43,6 +44,7 @@ export const defaultMappings: Mappings = new Map([
       ['date', 'date'],
       ['payee', 'payeeName'],
       ['notes', 'notes'],
+      ['memo', 'memo'],
     ]),
   ],
 ]);

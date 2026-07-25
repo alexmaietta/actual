@@ -133,6 +133,7 @@ export function TransactionListItem({
     is_parent: isParent,
     is_child: isChild,
     notes,
+    memo,
     forceUpcoming,
   } = transaction;
 
@@ -287,6 +288,20 @@ export function TransactionListItem({
                     {prettyCategory || t('Uncategorized')}
                   </TextOneLine>
                 </View>
+              )}
+              {memo && (
+                <TextOneLine
+                  style={{
+                    fontSize: 11,
+                    marginTop: 4,
+                    fontWeight: '400',
+                    color: theme.tableText,
+                    textAlign: 'left',
+                    opacity: 0.85,
+                  }}
+                >
+                  {memo}
+                </TextOneLine>
               )}
               {notes && (
                 <TextOneLine

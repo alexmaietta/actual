@@ -8,6 +8,17 @@ export type BankSyncBalance = GoCardlessBalance;
 export type BankSyncAmount = GoCardlessAmount;
 export type BankSyncTransaction = GoCardlessTransaction;
 
+export type BankSyncHolding = {
+  symbol?: string;
+  description?: string;
+  shares?: string | number;
+  purchase_price?: string | number;
+  cost_basis?: string | number;
+  market_value?: string | number;
+  currency?: string;
+  created?: number;
+};
+
 export type BankSyncResponse = {
   transactions: {
     all: BankSyncTransaction[];
@@ -18,6 +29,7 @@ export type BankSyncResponse = {
   startingBalance: number;
   error_type: string;
   error_code: string;
+  holdings?: BankSyncHolding[];
 };
 
 export const SYNC_PROVIDERS = [

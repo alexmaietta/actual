@@ -72,6 +72,40 @@ async function updateAccountBalance(id: AccountEntity['id'], balance: number) {
   await db.update('accounts', { id, balance_current: balance });
 }
 
+async function replaceHoldings(accountId: AccountEntity['id'], holdings) {
+  const existing = await db.all<{ id: string }>(
+    'SELECT id FROM holdings WHERE account = ? AND tombstone = 0',
+    [accountId],
+  );
+
+  await batchMessages(async () => {
+    for (const { id } of existing) {
+      await db.delete_('holdings', id);
+    }
+
+    for (const holding of holdings ?? []) {
+      await db.insertWithUUID('holdings', {
+        account: accountId,
+        symbol: holding.symbol,
+        description: holding.description,
+        shares: holding.shares != null ? parseFloat(holding.shares) : null,
+        purchase_price:
+          holding.purchase_price != null
+            ? parseFloat(holding.purchase_price)
+            : null,
+        cost_basis:
+          holding.cost_basis != null ? parseFloat(holding.cost_basis) : null,
+        market_value:
+          holding.market_value != null
+            ? parseFloat(holding.market_value)
+            : null,
+        currency: holding.currency,
+        created_at: holding.created,
+      });
+    }
+  });
+}
+
 async function getAccountOldestTransaction(id): Promise<TransactionEntity> {
   return (
     await aqlQuery(
@@ -236,6 +270,7 @@ async function downloadSimpleFinTransactions(
         transactions: data?.transactions?.all,
         accountBalance: data?.balances,
         startingBalance: data?.startingBalance,
+        holdings: data?.holdings,
       };
 
       if (error) {
@@ -268,6 +303,7 @@ async function downloadSimpleFinTransactions(
       transactions: res.transactions.all,
       accountBalance: res.balances,
       startingBalance: res.startingBalance,
+      holdings: res.holdings,
     };
   }
 
@@ -524,6 +560,7 @@ async function normalizeBankSyncTransactions(transactions, acctId) {
     const date = trans[mapping.get('date')] ?? trans.date;
     const payeeName = trans[mapping.get('payee')] ?? trans.payeeName;
     const notes = trans[mapping.get('notes')];
+    const memo = trans[mapping.get('memo')];
 
     // Validate the date because we do some stuff with it. The db
     // layer does better validation, but this will give nicer errors
@@ -559,6 +596,7 @@ async function normalizeBankSyncTransactions(transactions, acctId) {
         account: trans.account,
         date,
         notes: importNotes && notes ? notes.trim().replace(/#/g, '##') : null,
+        memo: memo ? memo.trim() : null,
         category: categoryIds.has(trans.category) ? trans.category : null,
         imported_id,
         imported_payee: trans.imported_payee,
@@ -648,6 +686,7 @@ export async function reconcileTransactions(
         category: existing.category || trans.category || null,
         imported_payee: trans.imported_payee || null,
         notes: existing.notes || trans.notes || null,
+        memo: existing.memo || trans.memo || null,
         cleared: existing.cleared || trans.cleared || false,
         raw_synced_data:
           existing.raw_synced_data ?? trans.raw_synced_data ?? null,
@@ -839,12 +878,13 @@ export async function matchTransactions(
             | 'imported_payee'
             | 'category'
             | 'notes'
+            | 'memo'
             | 'reconciled'
             | 'cleared'
             | 'amount'
           >
         >(
-          `SELECT id, is_parent, date, imported_id, payee, imported_payee, category, notes, reconciled, cleared, amount
+          `SELECT id, is_parent, date, imported_id, payee, imported_payee, category, notes, memo, reconciled, cleared, amount
           FROM v_transactions
           WHERE
             -- If both ids are set, and we didn't match earlier then skip dedup
@@ -871,12 +911,13 @@ export async function matchTransactions(
             | 'imported_payee'
             | 'category'
             | 'notes'
+            | 'memo'
             | 'reconciled'
             | 'cleared'
             | 'amount'
           >
         >(
-          `SELECT id, is_parent, date, imported_id, payee, imported_payee, category, notes, reconciled, cleared, amount
+          `SELECT id, is_parent, date, imported_id, payee, imported_payee, category, notes, memo, reconciled, cleared, amount
           FROM v_transactions
           WHERE date >= ? AND date <= ? AND amount = ? AND account = ?`,
           [sevenDaysBefore, sevenDaysAfter, trans.amount || 0, acctId],
@@ -1185,6 +1226,7 @@ export async function syncAccount(
   let download;
   if (acctRow.account_sync_source === 'simpleFin') {
     download = await downloadSimpleFinTransactions(acctId, syncStartDate);
+    await replaceHoldings(id, download?.holdings);
   } else if (acctRow.account_sync_source === 'pluggyai') {
     download = await downloadPluggyAiTransactions(
       acctId,
@@ -1287,6 +1329,8 @@ export async function simpleFinBatchSync(
       );
       continue;
     }
+
+    await replaceHoldings(account.id, download.holdings);
 
     promises.push(
       processBankSyncDownload(download, account.id, acctRow, newAccount)

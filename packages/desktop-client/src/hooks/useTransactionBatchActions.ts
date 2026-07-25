@@ -125,13 +125,14 @@ export function useTransactionBatchActions() {
 
         let valueToSet = value;
 
-        if (name === 'notes') {
+        if (name === 'notes' || name === 'memo') {
+          const existing = name === 'notes' ? trans.notes : trans.memo;
           if (mode === 'prepend') {
             valueToSet =
-              trans.notes === null ? value : `${String(value)}${trans.notes}`;
+              existing === null ? value : `${String(value)}${existing}`;
           } else if (mode === 'append') {
             valueToSet =
-              trans.notes === null ? value : `${trans.notes}${String(value)}`;
+              existing === null ? value : `${existing}${String(value)}`;
           } else if (mode === 'replace') {
             valueToSet = value;
           } else if (
@@ -140,7 +141,7 @@ export function useTransactionBatchActions() {
             'useRegex' in value
           ) {
             valueToSet = applyFindReplace(
-              trans.notes,
+              existing,
               value.find,
               value.replace,
               value.useRegex,
@@ -210,7 +211,12 @@ export function useTransactionBatchActions() {
     };
 
     const pushEditField = () => {
-      if (name !== 'date' && name !== 'amount' && name !== 'notes') {
+      if (
+        name !== 'date' &&
+        name !== 'amount' &&
+        name !== 'notes' &&
+        name !== 'memo'
+      ) {
         return;
       }
 

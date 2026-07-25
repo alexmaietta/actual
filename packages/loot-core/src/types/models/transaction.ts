@@ -15,6 +15,7 @@ export type TransactionEntity = {
   amount: IntegerAmount;
   payee?: PayeeEntity['id'] | null;
   notes?: string;
+  memo?: string;
   date: string;
   imported_id?: string;
   imported_payee?: string;

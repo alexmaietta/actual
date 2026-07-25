@@ -44,6 +44,7 @@ import {
   SvgLockClosed,
   SvgSubtract,
 } from '@actual-app/components/icons/v2';
+import { Input } from '@actual-app/components/input';
 import { Popover } from '@actual-app/components/popover';
 import { styles } from '@actual-app/components/styles';
 import { Text } from '@actual-app/components/text';
@@ -266,6 +267,17 @@ const TransactionHeader = memo(
           icon={field === 'payee' ? ascDesc : 'clickable'}
           onClick={() =>
             onSort('payee', selectAscDesc(field, ascDesc, 'payee', 'asc'))
+          }
+        />
+        <HeaderCell
+          value={t('Memo')}
+          width="flex"
+          alignItems="flex"
+          marginLeft={-5}
+          id="memo"
+          icon={field === 'memo' ? ascDesc : 'clickable'}
+          onClick={() =>
+            onSort('memo', selectAscDesc(field, ascDesc, 'memo', 'asc'))
           }
         />
         <HeaderCell
@@ -1169,6 +1181,11 @@ const Transaction = memo(function Transaction({
       return;
     }
 
+    // Don't change the memo to an empty string if it's null (since they are both rendered the same)
+    if (name === 'memo' && value === '' && transaction.memo == null) {
+      return;
+    }
+
     if (
       name === 'account' &&
       value &&
@@ -1227,6 +1244,7 @@ const Transaction = memo(function Transaction({
     payee: payeeId,
     imported_payee: importedPayee,
     notes,
+    memo,
     date,
     account: accountId,
     category: categoryId,
@@ -1644,6 +1662,16 @@ const Transaction = memo(function Transaction({
             onNavigateToSchedule={onNavigateToSchedule}
           />
         ))()}
+
+        <MemoCell
+          memo={memo ?? ''}
+          focused={focusedField === 'memo'}
+          valueStyle={valueStyle}
+          onUpdate={value => {
+            onUpdate('memo', value?.trim());
+          }}
+          onExpose={name => !isPreview && onEdit(id, name)}
+        />
 
         <NotesCell
           note={notes ?? ''}
@@ -2083,6 +2111,62 @@ function NotesCell({
           onBlur={onBlur}
           onKeyDown={onKeyDown}
           onUpdate={onUpdate}
+        />
+      )}
+    </CustomCell>
+  );
+}
+
+type MemoCellProps = {
+  memo: string;
+  focused: boolean;
+  valueStyle: CSSProperties | null;
+  onUpdate: (value: string) => void;
+  onExpose: (name: string) => void;
+};
+
+function MemoCell({
+  memo,
+  focused,
+  valueStyle,
+  onUpdate,
+  onExpose,
+}: MemoCellProps) {
+  const cellRef = useRef<HTMLDivElement | null>(null);
+  const [inputValue, setInputValue] = useState(memo);
+  useEffect(() => {
+    setInputValue(memo);
+  }, [memo, setInputValue]);
+
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      onUpdate(inputValue);
+    } else if (e.key === 'Escape') {
+      setInputValue(memo);
+    }
+  }
+
+  return (
+    <CustomCell
+      innerRef={cellRef}
+      width="flex"
+      name="memo"
+      value={memo}
+      valueStyle={valueStyle}
+      focused={focused}
+      exposed={focused}
+      onExpose={onExpose}
+      onUpdate={onUpdate}
+      onKeyDown={onKeyDown}
+      onBlur={() => onUpdate(inputValue)}
+    >
+      {({ inputStyle, onKeyDown, onBlur }) => (
+        <Input
+          value={inputValue}
+          onChangeValue={setInputValue}
+          onKeyDown={onKeyDown}
+          onBlur={onBlur}
+          style={inputStyle}
         />
       )}
     </CustomCell>
@@ -3055,6 +3139,7 @@ export const TransactionTable = forwardRef(
         'date',
         'account',
         'payee',
+        'memo',
         'notes',
         'category',
         'debit',
@@ -3073,6 +3158,7 @@ export const TransactionTable = forwardRef(
         'date',
         'account',
         'payee',
+        'memo',
         'notes',
         'category',
         'debit',
@@ -3085,7 +3171,7 @@ export const TransactionTable = forwardRef(
 
     function getFields(item: TransactionEntity | undefined, fields: string[]) {
       fields = item?.is_child
-        ? ['select', 'payee', 'notes', 'category', 'debit', 'credit']
+        ? ['select', 'payee', 'memo', 'notes', 'category', 'debit', 'credit']
         : fields.filter(
             f =>
               (props.showAccount || f !== 'account') &&

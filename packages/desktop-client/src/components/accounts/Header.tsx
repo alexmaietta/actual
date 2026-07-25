@@ -71,6 +71,7 @@ type AccountHeaderProps = {
   showExtraBalances: boolean;
   showCleared: boolean;
   showReconciled: boolean;
+  showHoldings: boolean;
   showEmptyMessage: boolean;
   balanceQuery: ComponentProps<typeof ReconcilingMessage>['balanceQuery'];
   reconcileAmount?: number | null;
@@ -146,6 +147,7 @@ export function AccountHeader({
   showExtraBalances,
   showCleared,
   showReconciled,
+  showHoldings,
   showEmptyMessage,
   balanceQuery,
   reconcileAmount,
@@ -516,6 +518,7 @@ export function AccountHeader({
                       showBalances={showBalances}
                       showCleared={showCleared}
                       showReconciled={showReconciled}
+                      showHoldings={showHoldings}
                       onMenuSelect={onMenuSelect}
                     />
                   </Dialog>
@@ -731,6 +734,7 @@ type AccountMenuProps = {
   canShowBalances: boolean;
   showCleared: boolean;
   showReconciled: boolean;
+  showHoldings: boolean;
   isSorted: boolean;
   onMenuSelect: (
     item:
@@ -743,6 +747,7 @@ type AccountMenuProps = {
       | 'remove-sorting'
       | 'toggle-cleared'
       | 'toggle-reconciled'
+      | 'toggle-holdings'
       | 'toggle-net-worth-chart',
   ) => void;
 };
@@ -755,6 +760,7 @@ function AccountMenu({
   canShowBalances,
   showCleared,
   showReconciled,
+  showHoldings,
   isSorted,
   onMenuSelect,
 }: AccountMenuProps) {
@@ -803,6 +809,10 @@ function AccountMenu({
           text: showReconciled
             ? t('Hide reconciled transactions')
             : t('Show reconciled transactions'),
+        },
+        {
+          name: 'toggle-holdings',
+          text: showHoldings ? t('Hide holdings') : t('Show holdings'),
         },
         { name: 'export', text: t('Export') },
         ...(account && !account.closed

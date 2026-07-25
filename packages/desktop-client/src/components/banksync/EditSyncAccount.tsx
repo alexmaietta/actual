@@ -19,7 +19,7 @@ import { useBankSyncAccountSettings } from './useBankSyncAccountSettings';
 
 export type TransactionDirection = 'payment' | 'deposit';
 
-type MappableActualFields = 'date' | 'payee' | 'notes';
+type MappableActualFields = 'date' | 'payee' | 'notes' | 'memo';
 
 type MappableField = {
   actualField: MappableActualFields;
@@ -101,6 +101,10 @@ const mappableFields: MappableField[] = [
       'meta.other_account',
       'meta.card_suffix',
     ],
+  },
+  {
+    actualField: 'memo',
+    syncFields: ['memo'],
   },
 ];
 

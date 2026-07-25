@@ -87,6 +87,7 @@ import { updateNewTransactions } from '#transactions/transactionsSlice';
 
 import { AccountEmptyMessage } from './AccountEmptyMessage';
 import { AccountHeader } from './Header';
+import { Holdings } from './Holdings';
 
 type ConditionEntity = Partial<RuleConditionEntity> | TransactionFilterEntity;
 
@@ -221,6 +222,8 @@ type AccountInternalProps = {
   setShowReconciled: (newValue: boolean) => void;
   showExtraBalances?: boolean;
   setShowExtraBalances: (newValue: boolean) => void;
+  showHoldings?: boolean;
+  setShowHoldings: (newValue: boolean) => void;
   modalShowing?: boolean;
   accounts: AccountEntity[];
   newTransactions: Array<TransactionEntity['id']>;
@@ -270,6 +273,7 @@ type AccountInternalState = {
   showCleared?: boolean | undefined;
   prevShowCleared?: boolean | undefined;
   showReconciled: boolean;
+  showHoldings?: boolean | undefined;
   nameError: string;
   isAdding: boolean;
   modalShowing?: boolean;
@@ -320,6 +324,7 @@ class AccountInternal extends PureComponent<
       balances: null,
       showCleared: props.showCleared,
       showReconciled: props.showReconciled,
+      showHoldings: props.showHoldings,
       nameError: '',
       isAdding: false,
       sort: null,
@@ -566,6 +571,7 @@ class AccountInternal extends PureComponent<
           balances: null,
           showCleared: nextProps.showCleared,
           showReconciled: nextProps.showReconciled,
+          showHoldings: nextProps.showHoldings,
           reconcileAmount: null,
         },
         () => {
@@ -810,6 +816,7 @@ class AccountInternal extends PureComponent<
       | 'remove-sorting'
       | 'toggle-cleared'
       | 'toggle-reconciled'
+      | 'toggle-holdings'
       | 'toggle-net-worth-chart',
   ) => {
     const accountId = this.props.accountId!;
@@ -917,6 +924,15 @@ class AccountInternal extends PureComponent<
           this.props.setShowNetWorthChart(false);
         } else {
           this.props.setShowNetWorthChart(true);
+        }
+        break;
+      case 'toggle-holdings':
+        if (this.state.showHoldings) {
+          this.props.setShowHoldings(false);
+          this.setState({ showHoldings: false });
+        } else {
+          this.props.setShowHoldings(true);
+          this.setState({ showHoldings: true });
         }
         break;
       default:
@@ -1701,6 +1717,7 @@ class AccountInternal extends PureComponent<
       balances,
       showCleared,
       showReconciled,
+      showHoldings,
       filteredAmount,
     } = this.state;
 
@@ -1777,6 +1794,7 @@ class AccountInternal extends PureComponent<
                 showExtraBalances={showExtraBalances ?? false}
                 showCleared={showCleared ?? false}
                 showReconciled={showReconciled ?? false}
+                showHoldings={showHoldings ?? false}
                 showEmptyMessage={showEmptyMessage ?? false}
                 balanceQuery={balanceQuery}
                 canCalculateBalance={this?.canCalculateBalance ?? undefined}
@@ -1821,6 +1839,8 @@ class AccountInternal extends PureComponent<
                 onMakeAsNonSplitTransactions={this.onMakeAsNonSplitTransactions}
                 onMergeTransactions={this.onMergeTransactions}
               />
+
+              {showHoldings && <Holdings accountId={accountId} />}
 
               <View style={{ flex: 1 }}>
                 <TransactionList
@@ -1983,6 +2003,9 @@ export function Account() {
   const [showExtraBalances, setShowExtraBalances] = useSyncedPref(
     `show-extra-balances-${params.id || 'all-accounts'}`,
   );
+  const [showHoldings, setShowHoldings] = useSyncedPref(
+    `show-holdings-${params.id}`,
+  );
   const modalShowing = useSelector(state => state.modals.modalStack.length > 0);
   const accountsSyncing = useSelector(state => state.account.accountsSyncing);
   const filterConditions = location?.state?.filterConditions || [];
@@ -2039,6 +2062,8 @@ export function Account() {
             setShowExtraBalances={extraBalances =>
               setShowExtraBalances(String(extraBalances))
             }
+            showHoldings={String(showHoldings) === 'true'}
+            setShowHoldings={val => setShowHoldings(String(val))}
             payees={payees}
             modalShowing={modalShowing}
             accountsSyncing={accountsSyncing}
